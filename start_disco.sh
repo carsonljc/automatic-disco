@@ -27,7 +27,7 @@ apt-get update
 apt-get install jq -y
 
 # Install Outline Server
-yes | sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-server/master/src/server_manager/install_scripts/install_server.sh) --keys-port 443"
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-server/master/src/server_manager/install_scripts/install_server.sh) --keys-port 443"
 
 # Generate new default key
 export API_URL=$(grep "apiUrl" /opt/outline/access.txt | cut -d: -f 2- | xargs)
