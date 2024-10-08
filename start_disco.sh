@@ -32,7 +32,7 @@ export API_URL=$(grep "apiUrl" /opt/outline/access.txt | cut -d: -f 2- | xargs)
 # Declare an associative array to map IDs to their byte limits in GB
 declare -A keys_limits
 keys_limits=(
-    ["default"]=1000  # 1 TB = 1000 GB
+    ["personal"]=1000  # 1 TB = 1000 GB
     ["sk"]=100    # 100 GB
 )
 
