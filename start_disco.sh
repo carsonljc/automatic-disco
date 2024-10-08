@@ -27,14 +27,28 @@ apt-get install jq -y
 # Install Outline Server
 sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-server/master/src/server_manager/install_scripts/install_server.sh) --keys-port 443"
 
-# Generate new default key
 export API_URL=$(grep "apiUrl" /opt/outline/access.txt | cut -d: -f 2- | xargs)
-curl --insecure -X DELETE "$API_URL/access-keys/default"
-curl --insecure -X PUT "$API_URL/access-keys/default"
 
-# Store the configs
-curl --insecure -X GET "$API_URL/access-keys/default" | jq --arg prefix "$OUTLINE_PREFIX" '{ server: (.accessUrl | split("@")[1] | split(":")[0]), server_port: (.port), password: (.password), method: (.method), prefix: $prefix }' > /tmp/outline.json
-curl --insecure -X GET "$API_URL/access-keys/default" | jq '{"version": 1, "servers": [{ server: (.accessUrl | split("@")[1] | split(":")[0]), server_port: (.port), password: (.password), method: (.method) }]}' > /tmp/shadowsocks.json
+# Declare an associative array to map IDs to their byte limits in GB
+declare -A keys_limits
+keys_limits=(
+    ["default"]=1000  # 1 TB = 1000 GB
+    ["sk"]=100    # 100 GB
+)
+
+# Loop through the keys
+for id in "${!keys_limits[@]}"; do
+    limit=$((keys_limits[$id] * 1000000000))  # Convert GB to bytes
+
+    # Generate new key
+    curl --insecure -X DELETE "$API_URL/access-keys/$id"
+    curl --insecure -X PUT "$API_URL/access-keys/$id"
+    curl --insecure -X POST "$API_URL/access-keys/$id/data-limit" -H "Content-Type: application/json" -d "{\"limit\": {\"bytes\": $limit}}"
+
+    # Store the configs for each key
+    curl --insecure -X GET "$API_URL/access-keys/$id" | jq --arg prefix "$OUTLINE_PREFIX" '{ server: (.accessUrl | split("@")[1] | split(":")[0]), server_port: (.port), password: (.password), method: (.method), prefix: $prefix }' > "/tmp/${id}_outline.json"
+    curl --insecure -X GET "$API_URL/access-keys/$id" | jq '{"version": 1, "servers": [{ server: (.accessUrl | split("@")[1] | split(":")[0]), server_port: (.port), password: (.password), method: (.method) }]}' > "/tmp/${id}_shadowsocks.json"
+done
 
 # Set tcp congestion control
 sudo sh -c 'echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf'
