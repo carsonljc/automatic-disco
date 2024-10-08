@@ -43,7 +43,7 @@ for id in "${!keys_limits[@]}"; do
     # Generate new key
     curl --insecure -X DELETE "$API_URL/access-keys/$id"
     curl --insecure -X PUT "$API_URL/access-keys/$id"
-    curl --insecure -X POST "$API_URL/access-keys/$id/data-limit" -H "Content-Type: application/json" -d "{\"limit\": {\"bytes\": $limit}}"
+    curl --insecure -X PUT "$API_URL/access-keys/$id/data-limit" -H "Content-Type: application/json" -d "{\"limit\": {\"bytes\": $limit}}"
 
     # Store the configs for each key
     curl --insecure -X GET "$API_URL/access-keys/$id" | jq --arg prefix "$OUTLINE_PREFIX" '{ server: (.accessUrl | split("@")[1] | split(":")[0]), server_port: (.port), password: (.password), method: (.method), prefix: $prefix }' > "/tmp/${id}_outline.json"
